@@ -1,6 +1,5 @@
 #! /usr/bin/env node
 
-const DELETE_FOLDER_DELAY = 5000
 const PLACEHOLDER_MANAGEMENT_TOKEN = 'placeholder-management-token'
 const PLACEHOLDER_SPACE_ID = 'placeholder-space-id'
 const DEFAULT_ALLOWED_LIMIT = 100
@@ -30,8 +29,10 @@ const DEFAULT_EXPORT_DIR = 'export/'
 
     const options = await extractOptions(initialSettings)
     await performExport(options, initialSettings)
+    process.exit(0)
   } catch (error) {
     console.error('@@/ERROR:', error)
+    process.exit(1)
   }
 })()
 
@@ -48,7 +49,7 @@ const DEFAULT_EXPORT_DIR = 'export/'
  *
  */
 async function getEnvValues(localWorkingDir, scriptDirectory) {
-  const { existsSync } = await import('fs')
+  const { existsSync } = await import('node:fs')
   const { config } = await import('dotenv')
 
   const envDataFromPath = path =>
@@ -180,7 +181,8 @@ async function checkArgs(parsedArgs) {
  * @throws {Error} If the destination folder does not exist or is not accessible.
  */
 async function getDestinationFolder(rootFolder, cmsExportDir, parsedArgs) {
-  const fileSystem = await import('fs')
+  /** @type {typeof import('node:fs')} */
+  const fileSystem = await import('node:fs')
 
   const defaultExportDirectory = cmsExportDir.startsWith('/')
     ? cmsExportDir
@@ -222,9 +224,10 @@ async function getDestinationFolder(rootFolder, cmsExportDir, parsedArgs) {
  * @return {Promise<import("contentful-export/types.js").Options>} The options for performing the export.
  */
 async function extractOptions(initialSettings) {
-  const contentfulManagement = (await import('contentful-management')).default
+  const contentfulManagement = await import('contentful-management')
   const lib = await import('contentful-lib-helpers')
-  const fileSystem = await import('fs')
+  /** @type {typeof import('node:fs')} */
+  const fileSystem = await import('node:fs')
 
   // Set up filename for export file and log
   const isCompressed = initialSettings?.shouldCompressFolder
@@ -309,7 +312,8 @@ async function extractOptions(initialSettings) {
 async function performExport(options, initialSettings) {
   const contentfulExport = (await import('contentful-export')).default
   const admZip = (await import('adm-zip')).default
-  const fileSystem = await import('fs')
+  /** @type {typeof import('node:fs')} */
+  const fileSystem = await import('node:fs')
 
   await contentfulExport(options)
 
@@ -335,8 +339,9 @@ async function performExport(options, initialSettings) {
       const zip = new admZip()
       logFile = await buildFilePath(rootExportFolder, defaultExportName, 'log')
 
-      zip.addLocalFolder(destinationFolder, '', '', null)
-      zip.writeZip(zipFile, await deleteFolderAfterZip(destinationFolder))
+      zip.addLocalFolder(destinationFolder, '')
+      zip.writeZip(zipFile)
+      await deleteFolderAfterZip(destinationFolder)
     } else {
       throw new Error('Error happened during ZIP file compression')
     }
@@ -358,8 +363,8 @@ async function performExport(options, initialSettings) {
  * @return {Promise<string>} The path of the current directory.
  */
 async function getDirNamePath() {
-  const { fileURLToPath } = await import('url')
-  const { dirname } = await import('path')
+  const { fileURLToPath } = await import('node:url')
+  const { dirname } = await import('node:path')
 
   const __filename = fileURLToPath(import.meta.url)
   return dirname(__filename)
@@ -399,14 +404,12 @@ async function buildFilePath(rootFolder, fileName = '', ext = '') {
  * Deletes the temporary destination folder after the ZIP file has been created.
  *
  * @param {string} destinationFolder - The folder to delete.
- * @return {Promise<Function>} The result of the deletion operation.
+ * @return {Promise<void>}
  */
 async function deleteFolderAfterZip(destinationFolder) {
-  const fileSystem = await import('fs')
+  /** @type {typeof import('node:fs')} */
+  const fileSystem = await import('node:fs')
 
   console.log('##/INFO: Deleting Temporary Destination Folder.... ')
-  setTimeout(() => {
-    // Delete folder and json (leave only the zip file)
-    fileSystem.rmSync(destinationFolder, { recursive: true })
-  }, DELETE_FOLDER_DELAY)
+  fileSystem.rmSync(destinationFolder, { recursive: true })
 }
