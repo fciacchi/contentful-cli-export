@@ -58,16 +58,16 @@ yarn add contentful-cli-export
 Similarly, if you are using [Bun 🔗](https://bun.sh), just run:
 
 ```shell
-bun add contentful-cli-release
+bun add contentful-cli-export
 ```
 
 ### Requirements
 
-* `node` >= 18.20.0
+* `node` >= 22
 * `npm` >= 10.5.0
-* `contentful-management` >= 11.31.7
+* `contentful-management` >= 12.x.x
 * `contentful-export` >= 7.19.146
-* [contentful-lib-helpers](https://www.npmjs.com/package/contentful-lib-helpers) >= 0.4.0
+* [contentful-lib-helpers](https://www.npmjs.com/package/contentful-lib-helpers) >= 1.0.0
 
 ### Set-up
 
